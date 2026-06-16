@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Питание">
+<title>План питания</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --bg: #f7f7f5; --card: #ffffff; --text: #1a1a1a; --muted: #6b6b6b; --hint: #a0a0a0;
+  --border: rgba(0,0,0,0.1); --green: #1D9E75; --green-bg: #E1F5EE; --green-text: #085041;
+  --amber-bg: #FAEEDA; --amber-text: #854F0B; --blue-bg: #E6F1FB; --blue-text: #185FA5;
+  --radius: 12px; --radius-sm: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #111110; --card: #1e1e1c; --text: #f0ede8; --muted: #a0a09a; --hint: #666660;
+    --border: rgba(255,255,255,0.1); --green-bg: #085041; --green-text: #9FE1CB;
+    --amber-bg: #633806; --amber-text: #FAC775; --blue-bg: #0C447C; --blue-text: #B5D4F4; }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); padding-bottom: 32px; }
+.header { background: var(--card); border-bottom: 0.5px solid var(--border); padding: 16px 20px 12px; position: sticky; top: 0; z-index: 10; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.app-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.badge { font-size: 12px; background: var(--green-bg); color: var(--green-text); padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px; }
+.met { background: var(--card); border-radius: var(--radius-sm); padding: 10px 12px; border: 0.5px solid var(--border); }
+.met-lbl { font-size: 11px; color: var(--hint); margin-bottom: 3px; }
+.met-val { font-size: 16px; font-weight: 600; color: var(--green); }
+.day-nav { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; scrollbar-width: none; }
+.day-nav::-webkit-scrollbar { display: none; }
+.d-btn { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; font-size: 13px; color: var(--muted); font-family: inherit; }
+.d-btn.active { background: var(--green); color: white; border-color: var(--green); font-weight: 500; }
+.day-content { display: none; padding: 0 16px; flex-direction: column; gap: 10px; }
+.day-content.active { display: flex; }
+.meal-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px 16px; }
+.meal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.meal-time { font-size: 11px; color: var(--hint); margin-bottom: 3px; }
+.meal-name { font-size: 15px; font-weight: 500; }
+.kcal-pill { font-size: 12px; padding: 3px 9px; border-radius: 20px; background: var(--green-bg); color: var(--green-text); white-space: nowrap; }
+.items { list-style: none; }
+.items li { font-size: 13px; color: var(--muted); padding: 4px 0; border-bottom: 0.5px solid var(--border); display: flex; justify-content: space-between; }
+.items li:last-child { border-bottom: none; }
+.g { font-size: 12px; color: var(--hint); }
+.total { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.total-label { font-size: 13px; font-weight: 500; }
+.macros { display: flex; gap: 6px; }
+.mp { font-size: 12px; padding: 2px 8px; border-radius: 20px; }
+.mp-b { background: var(--blue-bg); color: var(--blue-text); }
+.mp-f { background: var(--amber-bg); color: var(--amber-text); }
+.mp-c { background: var(--green-bg); color: var(--green-text); }
+.tip { border-left: 2px solid var(--border); padding: 8px 12px; font-size: 13px; color: var(--muted); }
+.tip strong { color: var(--text); }
+.section-lbl { font-size: 12px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 16px 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">План питания</div>
+    <span class="badge">3 приёма · без каш</span>
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="met"><div class="met-lbl">Ккал/день</div><div class="met-val">~2100</div></div>
+  <div class="met"><div class="met-lbl">Белок</div><div class="met-val">150 г</div></div>
+  <div class="met"><div class="met-lbl">Приёмов</div><div class="met-val">3</div></div>
+  <div class="met"><div class="met-lbl">Дефицит</div><div class="met-val">−350</div></div>
+</div>
+
+<div class="day-nav">
+  <button class="d-btn active" onclick="switchDay('d1',this)">Пн</button>
+  <button class="d-btn" onclick="switchDay('d2',this)">Вт</button>
+  <button class="d-btn" onclick="switchDay('d3',this)">Ср</button>
+  <button class="d-btn" onclick="switchDay('d4',this)">Чт</button>
+  <button class="d-btn" onclick="switchDay('d5',this)">Пт</button>
+  <button class="d-btn" onclick="switchDay('d6',this)">Сб</button>
+  <button class="d-btn" onclick="switchDay('d7',this)">Вс</button>
+</div>
+
+<!-- ПН -->
+<div id="d1" class="day-content active">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">08:00 — Завтрак</div><div class="meal-name">Омлет с овощами</div></div><span class="kcal-pill">480 ккал</span></div>
+    <ul class="items">
+      <li>Яйца (4 шт.) <span class="g">~240 ккал</span></li>
+      <li>Молоко 2.5% (50 мл) <span class="g">~30 ккал</span></li>
+      <li>Болгарский перец + помидор <span class="g">~40 ккал</span></li>
+      <li>Сыр твёрдый (20 г) <span class="g">~80 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:00 — Обед</div><div class="meal-name">Куриная грудка с картофелем и салатом</div></div><span class="kcal-pill">680 ккал</span></div>
+    <ul class="items">
+      <li>Куриная грудка (250 г, запечённая) <span class="g">~275 ккал</span></li>
+      <li>Картофель варёный (200 г) <span class="g">~160 ккал</span></li>
+      <li>Огурец + помидор + листья салата <span class="g">~35 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Лосось с брокколи</div></div><span class="kcal-pill">560 ккал</span></div>
+    <ul class="items">
+      <li>Лосось запечённый (220 г) <span class="g">~375 ккал</span></li>
+      <li>Брокколи на пару (250 г) <span class="g">~70 ккал</span></li>
+      <li>Оливковое масло + лимон <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 100 ккал</span><div class="macros"><span class="mp mp-b">Б: 152 г</span><span class="mp mp-f">Ж: 70 г</span><span class="mp mp-c">У: 195 г</span></div></div>
+</div>
+
+<!-- ВТ -->
+<div id="d2" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">08:00 — Завтрак</div><div class="meal-name">Яйца пашот с авокадо</div></div><span class="kcal-pill">510 ккал</span></div>
+    <ul class="items">
+      <li>Яйца пашот (3 шт.) <span class="g">~220 ккал</span></li>
+      <li>Авокадо ½ шт. <span class="g">~120 ккал</span></li>
+      <li>Хлеб ржаной (2 куска) <span class="g">~130 ккал</span></li>
+      <li>Помидор черри <span class="g">~20 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:00 — Обед</div><div class="meal-name">Говяжий суп + хлеб</div></div><span class="kcal-pill">620 ккал</span></div>
+    <ul class="items">
+      <li>Говядина в супе (200 г) <span class="g">~280 ккал</span></li>
+      <li>Овощной суп (400 мл) <span class="g">~100 ккал</span></li>
+      <li>Хлеб ржаной (2 куска) <span class="g">~130 ккал</span></li>
+      <li>Свежий огурец <span class="g">~15 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Куриное филе с овощами на гриле</div></div><span class="kcal-pill">540 ккал</span></div>
+    <ul class="items">
+      <li>Куриное филе (250 г) <span class="g">~275 ккал</span></li>
+      <li>Кабачок + перец + лук (гриль) <span class="g">~80 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (2 куска) <span class="g">~130 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 090 ккал</span><div class="macros"><span class="mp mp-b">Б: 148 г</span><span class="mp mp-f">Ж: 65 г</span><span class="mp mp-c">У: 210 г</span></div></div>
+</div>
+
+<!-- СР -->
+<div id="d3" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">08:00 — Завтрак</div><div class="meal-name">Яичница + творог</div></div><span class="kcal-pill">500 ккал</span></div>
+    <ul class="items">
+      <li>Яичница из 3 яиц (сухая сковорода) <span class="g">~220 ккал</span></li>
+      <li>Творог 5% (150 г) <span class="g">~135 ккал</span></li>
+      <li>Помидор <span class="g">~20 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:00 — Обед</div><div class="meal-name">Тунец с бурым рисом</div></div><span class="kcal-pill">650 ккал</span></div>
+    <ul class="items">
+      <li>Тунец в воде (2 банки, 280 г) <span class="g">~240 ккал</span></li>
+      <li>Бурый рис (150 г варёного) <span class="g">~175 ккал</span></li>
+      <li>Листья салата + огурец <span class="g">~25 ккал</span></li>
+      <li>Оливковое масло + лимон <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Индейка с цветной капустой</div></div><span class="kcal-pill">520 ккал</span></div>
+    <ul class="items">
+      <li>Филе индейки тушёное (250 г) <span class="g">~275 ккал</span></li>
+      <li>Цветная капуста запечённая (300 г) <span class="g">~80 ккал</span></li>
+      <li>Чеснок + специи <span class="g">~10 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 080 ккал</span><div class="macros"><span class="mp mp-b">Б: 160 г</span><span class="mp mp-f">Ж: 62 г</span><span class="mp mp-c">У: 185 г</span></div></div>
+</div>
+
+<!-- ЧТ -->
+<div id="d4" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">08:00 — Завтрак</div><div class="meal-name">Скрамбл с сыром</div></div><span class="kcal-pill">490 ккал</span></div>
+    <ul class="items">
+      <li>Яйца (4 шт., скрамбл) <span class="g">~240 ккал</span></li>
+      <li>Сыр твёрдый (25 г) <span class="g">~100 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+      <li>Зелень (укроп, петрушка) <span class="g">~5 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:00 — Обед</div><div class="meal-name">Куриный суп + грудка</div></div><span class="kcal-pill">660 ккал</span></div>
+    <ul class="items">
+      <li>Куриный суп (400 мл) <span class="g">~160 ккал</span></li>
+      <li>Куриная грудка доп. (150 г) <span class="g">~165 ккал</span></li>
+      <li>Хлеб ржаной (2 куска) <span class="g">~130 ккал</span></li>
+      <li>Огурец + помидор <span class="g">~35 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Треска с овощами</div></div><span class="kcal-pill">510 ккал</span></div>
+    <ul class="items">
+      <li>Треска запечённая (300 г) <span class="g">~235 ккал</span></li>
+      <li>Брокколи + морковь тушёные <span class="g">~80 ккал</span></li>
+      <li>Картофель варёный (100 г) <span class="g">~80 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 120 ккал</span><div class="macros"><span class="mp mp-b">Б: 155 г</span><span class="mp mp-f">Ж: 58 г</span><span class="mp mp-c">У: 215 г</span></div></div>
+</div>
+
+<!-- ПТ -->
+<div id="d5" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">08:00 — Завтрак</div><div class="meal-name">Яйца с авокадо и лососем</div></div><span class="kcal-pill">530 ккал</span></div>
+    <ul class="items">
+      <li>Яйца варёные (3 шт.) <span class="g">~230 ккал</span></li>
+      <li>Слабосолёный лосось (60 г) <span class="g">~110 ккал</span></li>
+      <li>Авокадо ½ шт. <span class="g">~120 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:00 — Обед</div><div class="meal-name">Говядина с картофелем</div></div><span class="kcal-pill">670 ккал</span></div>
+    <ul class="items">
+      <li>Говядина тушёная (200 г) <span class="g">~280 ккал</span></li>
+      <li>Картофель варёный (200 г) <span class="g">~160 ккал</span></li>
+      <li>Лук + морковь тушёные <span class="g">~60 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Куриная грудка с салатом</div></div><span class="kcal-pill">490 ккал</span></div>
+    <ul class="items">
+      <li>Куриная грудка (250 г, гриль) <span class="g">~275 ккал</span></li>
+      <li>Листья салата + огурец + помидор <span class="g">~35 ккал</span></li>
+      <li>Яйцо варёное (1 шт.) <span class="g">~77 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 090 ккал</span><div class="macros"><span class="mp mp-b">Б: 158 г</span><span class="mp mp-f">Ж: 72 г</span><span class="mp mp-c">У: 185 г</span></div></div>
+</div>
+
+<!-- СБ -->
+<div id="d6" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">09:00 — Завтрак</div><div class="meal-name">Творожные панкейки (без муки)</div></div><span class="kcal-pill">510 ккал</span></div>
+    <ul class="items">
+      <li>Творог 5% (250 г) <span class="g">~225 ккал</span></li>
+      <li>Яйца (2 шт.) <span class="g">~155 ккал</span></li>
+      <li>Банан ½ шт. (в тесто) <span class="g">~45 ккал</span></li>
+      <li>Греческий йогурт 2% (100 г) <span class="g">~60 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">13:30 — Обед</div><div class="meal-name">Лосось с овощным салатом</div></div><span class="kcal-pill">640 ккал</span></div>
+    <ul class="items">
+      <li>Лосось запечённый (220 г) <span class="g">~375 ккал</span></li>
+      <li>Помидоры + огурцы + перец <span class="g">~50 ккал</span></li>
+      <li>Яйцо варёное (1 шт.) <span class="g">~77 ккал</span></li>
+      <li>Оливковое масло + лимон <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Куриные котлеты на пару</div></div><span class="kcal-pill">500 ккал</span></div>
+    <ul class="items">
+      <li>Куриный фарш (300 г, котлеты на пару) <span class="g">~330 ккал</span></li>
+      <li>Кабачок тушёный (200 г) <span class="g">~35 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 130 ккал</span><div class="macros"><span class="mp mp-b">Б: 155 г</span><span class="mp mp-f">Ж: 68 г</span><span class="mp mp-c">У: 195 г</span></div></div>
+</div>
+
+<!-- ВС -->
+<div id="d7" class="day-content">
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">09:30 — Завтрак</div><div class="meal-name">Омлет с грибами и сыром</div></div><span class="kcal-pill">520 ккал</span></div>
+    <ul class="items">
+      <li>Яйца (4 шт.) <span class="g">~240 ккал</span></li>
+      <li>Шампиньоны (100 г, сухая сковорода) <span class="g">~30 ккал</span></li>
+      <li>Сыр твёрдый (30 г) <span class="g">~120 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">14:00 — Обед</div><div class="meal-name">Запечённая курица с картофелем</div></div><span class="kcal-pill">680 ккал</span></div>
+    <ul class="items">
+      <li>Куриное бедро без кожи (250 г) <span class="g">~335 ккал</span></li>
+      <li>Картофель запечённый (200 г) <span class="g">~200 ккал</span></li>
+      <li>Свежий салат + огурец <span class="g">~30 ккал</span></li>
+    </ul>
+  </div>
+  <div class="meal-card">
+    <div class="meal-header"><div><div class="meal-time">19:00 — Ужин</div><div class="meal-name">Говядина с брокколи</div></div><span class="kcal-pill">510 ккал</span></div>
+    <ul class="items">
+      <li>Говядина запечённая (200 г) <span class="g">~280 ккал</span></li>
+      <li>Брокколи + цветная капуста (250 г) <span class="g">~70 ккал</span></li>
+      <li>Оливковое масло (1 ч.л.) <span class="g">~40 ккал</span></li>
+      <li>Хлеб ржаной (1 кусок) <span class="g">~65 ккал</span></li>
+    </ul>
+  </div>
+  <div class="total"><span class="total-label">Итого: ~2 100 ккал</span><div class="macros"><span class="mp mp-b">Б: 150 г</span><span class="mp mp-f">Ж: 67 г</span><span class="mp mp-c">У: 200 г</span></div></div>
+</div>
+
+<div class="section-lbl" style="padding-bottom: 0;">Советы</div>
+<div style="padding: 10px 16px; display: flex; flex-direction: column; gap: 8px;">
+  <div class="tip"><strong>Голод между приёмами:</strong> стакан воды или чай без сахара — хорошо притупляет голод при 5–6 часах между едой.</div>
+  <div class="tip"><strong>Готовка заранее:</strong> запеки куриную грудку и говядину сразу на 2–3 дня — экономит время и снижает шанс срыва.</div>
+  <div class="tip"><strong>Соль:</strong> минимум соли — задерживает воду. Используй специи: куркума, паприка, чёрный перец, чеснок.</div>
+</div>
+
+<script>
+function switchDay(id, btn) {
+  document.querySelectorAll('.day-content').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.d-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+// Highlight today
+const dayMap = [null,'d1','d2','d3','d4','d5','d6','d7'];
+const todayIdx = new Date().getDay();
+const mapped = todayIdx === 0 ? 'd7' : dayMap[todayIdx];
+if (mapped) {
+  document.querySelectorAll('.d-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.day-content').forEach(d => d.classList.remove('active'));
+  const btn = document.querySelector('.day-nav .d-btn:nth-child(' + (todayIdx === 0 ? 7 : todayIdx) + ')');
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById(mapped);
+  if (el) el.classList.add('active');
+}
+</script>
+</body>
+</html>
