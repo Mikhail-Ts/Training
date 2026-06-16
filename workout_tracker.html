@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Тренировки">
+<title>Тренировки</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #f7f7f5;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --hint: #a0a0a0;
+    --border: rgba(0,0,0,0.1);
+    --green: #1D9E75;
+    --green-bg: #E1F5EE;
+    --green-text: #085041;
+    --teal-light: #9FE1CB;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111110;
+      --card: #1e1e1c;
+      --text: #f0ede8;
+      --muted: #a0a09a;
+      --hint: #666660;
+      --border: rgba(255,255,255,0.1);
+      --green-bg: #085041;
+      --green-text: #9FE1CB;
+      --amber-bg: #633806;
+      --amber-text: #FAC775;
+      --blue-bg: #0C447C;
+      --blue-text: #B5D4F4;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+
+  .header { background: var(--card); border-bottom: 0.5px solid var(--border); padding: 16px 20px 12px; position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .app-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .week-badge { font-size: 12px; background: var(--green-bg); color: var(--green-text); padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+  .week-nav { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .week-nav::-webkit-scrollbar { display: none; }
+  .day-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; font-size: 13px; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .day-pill.active { background: var(--green); color: white; border-color: var(--green); font-weight: 500; }
+  .day-pill.done { background: var(--green-bg); color: var(--green-text); border-color: transparent; }
+
+  .main { padding: 16px 16px 0; }
+
+  .day-header { margin-bottom: 14px; }
+  .day-name { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .day-type { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .stat-card { background: var(--card); border-radius: var(--radius-sm); padding: 10px 12px; border: 0.5px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--hint); margin-bottom: 3px; }
+  .stat-value { font-size: 18px; font-weight: 600; }
+  .stat-value.green { color: var(--green); }
+
+  .exercises-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .ex-item { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); overflow: hidden; }
+  .ex-main { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .ex-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; }
+  .ex-check.checked { background: var(--green); border-color: var(--green); }
+  .ex-check svg { width: 14px; height: 14px; stroke: white; stroke-width: 2.5; fill: none; display: none; }
+  .ex-check.checked svg { display: block; }
+  .ex-info { flex: 1; min-width: 0; }
+  .ex-name { font-size: 15px; font-weight: 500; }
+  .ex-sets { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .ex-item.completed .ex-name { text-decoration: line-through; color: var(--muted); }
+  .ex-expand { color: var(--hint); font-size: 18px; padding: 4px; transition: transform 0.2s; }
+  .ex-expand.open { transform: rotate(180deg); }
+  .ex-detail { padding: 0 16px 14px 54px; font-size: 13px; color: var(--muted); line-height: 1.6; display: none; }
+  .ex-detail.open { display: block; }
+  .sets-tracker { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .set-btn { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .set-btn.done { background: var(--green-bg); border-color: var(--green); color: var(--green-text); }
+
+  .rest-day { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 24px 20px; text-align: center; }
+  .rest-icon { font-size: 32px; margin-bottom: 8px; }
+  .rest-title { font-size: 17px; font-weight: 500; margin-bottom: 4px; }
+  .rest-sub { font-size: 13px; color: var(--muted); }
+
+  .complete-btn { width: 100%; padding: 15px; border-radius: var(--radius); border: none; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; margin-top: 4px; }
+  .complete-btn.ready { background: var(--green); color: white; }
+  .complete-btn.done-state { background: var(--green-bg); color: var(--green-text); }
+  .complete-btn.not-ready { background: var(--card); color: var(--muted); border: 0.5px solid var(--border); }
+
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 0.5px solid var(--border); display: flex; padding: 8px 0 max(8px, env(safe-area-inset-bottom)); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; border: none; background: transparent; cursor: pointer; font-family: inherit; color: var(--hint); transition: color 0.15s; }
+  .nav-btn.active { color: var(--green); }
+  .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 1.8; fill: none; }
+  .nav-btn span { font-size: 10px; font-weight: 500; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .progress-screen { padding: 16px; }
+  .prog-title { font-size: 20px; font-weight: 600; margin-bottom: 16px; letter-spacing: -0.3px; }
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 20px; }
+  .week-cell { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; border: 0.5px solid var(--border); background: var(--card); color: var(--muted); flex-direction: column; gap: 2px; }
+  .week-cell .cell-day { font-size: 10px; color: var(--hint); }
+  .week-cell.completed { background: var(--green); border-color: var(--green); color: white; }
+  .week-cell.completed .cell-day { color: rgba(255,255,255,0.7); }
+  .week-cell.rest-cell { background: var(--bg); }
+  .week-cell.today { border: 2px solid var(--green); }
+
+  .streak-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 16px; }
+  .streak-num { font-size: 36px; font-weight: 700; color: var(--green); line-height: 1; }
+  .streak-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-item { background: var(--card); border-radius: var(--radius-sm); border: 0.5px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+  .hist-date { font-size: 13px; color: var(--muted); }
+  .hist-name { font-size: 14px; font-weight: 500; }
+  .hist-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: var(--green-bg); color: var(--green-text); }
+
+  .tips-screen { padding: 16px; }
+  .tip-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 14px 16px; margin-bottom: 8px; }
+  .tip-head { font-size: 14px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .tip-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .tip-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .section-label { font-size: 12px; font-weight: 600; color: var(--hint); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">Тренировки</div>
+    <div class="week-badge" id="week-badge">Неделя 1</div>
+  </div>
+  <div class="week-nav" id="week-nav"></div>
+</div>
+
+<div id="screen-workout" class="screen active">
+  <div class="main" id="workout-main"></div>
+</div>
+
+<div id="screen-progress" class="screen">
+  <div class="progress-screen">
+    <div class="prog-title">Прогресс</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Всего</div><div class="stat-value green" id="stat-total">0</div></div>
+      <div class="stat-card"><div class="stat-label">Серия</div><div class="stat-value green" id="stat-streak">0</div></div>
+      <div class="stat-card"><div class="stat-label">Неделя</div><div class="stat-value green" id="stat-week">0/5</div></div>
+    </div>
+    <div class="section-label">Эта неделя</div>
+    <div class="week-grid" id="week-grid"></div>
+    <div class="section-label">История</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+</div>
+
+<div id="screen-tips" class="screen">
+  <div class="tips-screen">
+    <div class="prog-title">Советы</div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--green-bg)">💧</div>Вода</div><div class="tip-body">Выпивай 2.5 л воды в день. Стакан воды сразу после пробуждения — запускает метаболизм. Ещё стакан за 30 минут до тренировки.</div></div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--amber-bg)">🕐</div>Когда тренироваться</div><div class="tip-body">Утром до завтрака — максимальное жиросжигание. Вечером (18–20ч) — максимальная сила и выносливость. Главное — регулярность, а не время.</div></div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--blue-bg)">🥗</div>До и после</div><div class="tip-body">За 1.5–2 ч до тренировки — лёгкие углеводы + белок (овсянка, яйцо). После — белок в течение 30–45 минут (творог, куриная грудка).</div></div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--green-bg)">😴</div>Сон</div><div class="tip-body">7–8 часов сна — обязательное условие. Во сне вырабатывается гормон роста, который сжигает жир и восстанавливает мышцы. Без сна прогресс замедляется вдвое.</div></div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--amber-bg)">📏</div>Как замерять прогресс</div><div class="tip-body">Взвешивайся утром натощак раз в неделю. Замеряй талию рулеткой на уровне пупка. Делай фото раз в 2 недели — в одно время, в одном ракурсе.</div></div>
+    <div class="tip-card"><div class="tip-head"><div class="tip-icon" style="background:var(--blue-bg)">🔥</div>Вакуум живота</div><div class="tip-body">Делай вакуум живота каждое утро натощак: выдохни весь воздух, втяни живот максимально, удержи 15–20 секунд. 5 повторений. Укрепляет поперечную мышцу — «корсет» живота.</div></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-workout" onclick="showScreen('workout')">
+    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M4 12h16"/><circle cx="6.5" cy="6.5" r="2"/><circle cx="17.5" cy="6.5" r="2"/><circle cx="6.5" cy="17.5" r="2"/><circle cx="17.5" cy="17.5" r="2"/></svg>
+    <span>Тренировка</span>
+  </button>
+  <button class="nav-btn" id="nav-progress" onclick="showScreen('progress')">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Прогресс</span>
+  </button>
+  <button class="nav-btn" id="nav-tips" onclick="showScreen('tips')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Советы</span>
+  </button>
+</nav>
+
+<script>
+const DAYS = [
+  {
+    name: 'Понедельник', short: 'Пн', type: 'Кардио + Кор', isRest: false,
+    exercises: [
+      { name: 'Бег / быстрая ходьба', sets: 1, reps: '25–30 мин', tip: 'Темп разговорный — можешь говорить короткими фразами. ЧСС 120–140.' },
+      { name: 'Планка', sets: 3, reps: '45 сек', tip: 'Тело прямое, таз не поднимать и не опускать. Смотри в пол, дыши ровно.' },
+      { name: 'Скручивания', sets: 3, reps: '20 раз', tip: 'Отрываем только лопатки, не шею. Руки за ушами, локти широко.' },
+      { name: 'Велосипед', sets: 3, reps: '20 раз', tip: 'Локоть к противоположному колену. Медленно — 2 секунды на каждую сторону.' },
+      { name: 'Подъём ног лёжа', sets: 3, reps: '15 раз', tip: 'Поясница прижата к полу. Поднимай до 90°, медленно опускай не касаясь пола.' },
+    ]
+  },
+  {
+    name: 'Вторник', short: 'Вт', type: 'Силовая — верх', isRest: false,
+    exercises: [
+      { name: 'Отжимания', sets: 4, reps: '12 раз', tip: 'Тело прямое, грудь до пола. Если тяжело — с колен. Темп 2 вниз, 1 вверх.' },
+      { name: 'Тяга гантелей', sets: 3, reps: '12 раз', tip: 'Наклон 45°, тяни к поясу. Лопатки сводить в конечной точке.' },
+      { name: 'Разведение гантелей', sets: 3, reps: '12 раз', tip: 'Небольшой сгиб в локтях. Опускай медленно, чувствуй растяжение грудных.' },
+      { name: 'Жим гантелей стоя', sets: 3, reps: '12 раз', tip: 'Напряги кор, не прогибай поясницу. Гантели у плеч, жмём строго вверх.' },
+      { name: 'Боковая планка', sets: 2, reps: '30 сек', tip: 'Бедра не опускать. Свободную руку вверх или на бедро. По 30 сек на каждую сторону.' },
+    ]
+  },
+  {
+    name: 'Среда', short: 'Ср', type: 'Отдых', isRest: true, restText: 'Активный отдых', restSub: 'Прогулка 30–40 мин или лёгкая растяжка. Мышцы восстанавливаются.'
+  },
+  {
+    name: 'Четверг', short: 'Чт', type: 'HIIT + Кор', isRest: false,
+    exercises: [
+      { name: 'Джампинг-джек', sets: 4, reps: '40 сек', tip: 'Прыжки с разведением рук и ног. Отдых 20 сек между подходами.' },
+      { name: 'Берпи', sets: 3, reps: '10 раз', tip: 'Прыжок → упор лёжа → отжимание → вернуться → прыжок вверх. Не спеши, делай технично.' },
+      { name: 'Высокие колени', sets: 4, reps: '30 сек', tip: 'Колени поднимать до пояса. Руки активно работают. Темп максимальный.' },
+      { name: 'Ножницы лёжа', sets: 3, reps: '20 раз', tip: 'Поясница к полу, ноги под углом 30–45°. Поочерёдные махи — 10 в каждую сторону.' },
+      { name: 'Вакуум живота', sets: 5, reps: '20 сек', tip: 'Выдохни весь воздух, втяни живот максимально. Удержи 15–20 сек. Лучше делать натощак.' },
+    ]
+  },
+  {
+    name: 'Пятница', short: 'Пт', type: 'Силовая — низ', isRest: false,
+    exercises: [
+      { name: 'Приседания', sets: 4, reps: '15 раз', tip: 'Стопы на ширине плеч, носки чуть наружу. Спина прямая, колени за носки не выходят.' },
+      { name: 'Выпады', sets: 3, reps: '12 раз на ногу', tip: 'Шаг вперёд, заднее колено почти касается пола. Корпус строго вертикально.' },
+      { name: 'Ягодичный мост', sets: 3, reps: '20 раз', tip: 'Ложись на спину, стопы у ягодиц. Поднимай таз до прямой линии. Сжимай ягодицы наверху.' },
+      { name: 'Тяга гантелей стоя', sets: 3, reps: '12 раз', tip: 'Ноги чуть согнуты, наклон до горизонтали. Гантели ведём вдоль ног вниз-вверх.' },
+      { name: 'Планка + подтяг колен', sets: 3, reps: '12 раз', tip: 'Из планки поочерёдно подтягиваем колено к груди. Темп спокойный, с контролем.' },
+    ]
+  },
+  {
+    name: 'Суббота', short: 'Сб', type: 'Длинное кардио', isRest: false,
+    exercises: [
+      { name: 'Бег / велосипед / плавание', sets: 1, reps: '40–50 мин', tip: 'Умеренный темп, ЧСС 120–140. Разговорный темп — должен мочь говорить. Это жиросжигающая зона.' },
+      { name: 'Растяжка после', sets: 1, reps: '10 мин', tip: 'Растяни квадрицепс, бицепс бедра, икры, грудь и плечи. По 30–40 сек каждую мышцу.' },
+    ]
+  },
+  {
+    name: 'Воскресенье', short: 'Вс', type: 'Отдых', isRest: true, restText: 'Полный отдых', restSub: 'Восстановление — сон, питание, прогулка по желанию.'
+  },
+];
+
+let state = JSON.parse(localStorage.getItem('wt_state') || '{}');
+let history = JSON.parse(localStorage.getItem('wt_history') || '[]');
+
+function getWeekStart() {
+  const today = new Date();
+  const d = today.getDay();
+  const diff = today.getDate() - d + (d === 0 ? -6 : 1);
+  return new Date(today.setDate(diff)).toISOString().split('T')[0];
+}
+
+function getTodayIdx() {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+function getDayKey(weekStart, dayIdx) {
+  return weekStart + '_' + dayIdx;
+}
+
+function getCurrentWeekNum() {
+  const start = localStorage.getItem('wt_start');
+  if (!start) { localStorage.setItem('wt_start', getWeekStart()); return 1; }
+  const diff = (new Date(getWeekStart()) - new Date(start)) / (7 * 86400000);
+  return Math.floor(diff) + 1;
+}
+
+let currentDayIdx = getTodayIdx();
+let weekStart = getWeekStart();
+
+function saveState() {
+  localStorage.setItem('wt_state', JSON.stringify(state));
+  localStorage.setItem('wt_history', JSON.stringify(history));
+}
+
+function renderNav() {
+  const nav = document.getElementById('week-nav');
+  nav.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const key = getDayKey(weekStart, i);
+    const isDone = state[key] && state[key].completed;
+    const btn = document.createElement('button');
+    btn.className = 'day-pill' + (i === currentDayIdx ? ' active' : (isDone ? ' done' : ''));
+    btn.textContent = d.short;
+    btn.onclick = () => { currentDayIdx = i; renderNav(); renderWorkout(); };
+    nav.appendChild(btn);
+  });
+  document.getElementById('week-badge').textContent = 'Неделя ' + getCurrentWeekNum();
+}
+
+function renderWorkout() {
+  const day = DAYS[currentDayIdx];
+  const key = getDayKey(weekStart, currentDayIdx);
+  if (!state[key]) state[key] = { sets: {}, completed: false };
+  const ds = state[key];
+  const main = document.getElementById('workout-main');
+
+  let html = '<div class="day-header"><div class="day-name">' + day.name + '</div><div class="day-type">' + day.type + '</div></div>';
+
+  if (!day.isRest) {
+    const total = day.exercises.length;
+    const done = day.exercises.filter((_, i) => ds.sets[i] && ds.sets[i].every(Boolean)).length;
+    const pct = total > 0 ? Math.round(done / total * 100) : 0;
+    html += '<div class="stats-row">';
+    html += '<div class="stat-card"><div class="stat-label">Упражнений</div><div class="stat-value green">' + done + '/' + total + '</div></div>';
+    html += '<div class="stat-card"><div class="stat-label">Готово</div><div class="stat-value green">' + pct + '%</div></div>';
+    html += '<div class="stat-card"><div class="stat-label">Подходы</div><div class="stat-value green">' + countSets(ds, day) + '</div></div>';
+    html += '</div>';
+    html += '<div class="exercises-list">';
+    day.exercises.forEach((ex, ei) => {
+      if (!ds.sets[ei]) ds.sets[ei] = new Array(ex.sets).fill(false);
+      const allDone = ds.sets[ei].every(Boolean);
+      html += '<div class="ex-item' + (allDone ? ' completed' : '') + '" id="ex-' + ei + '">';
+      html += '<div class="ex-main" onclick="toggleEx(' + ei + ')">';
+      html += '<div class="ex-check' + (allDone ? ' checked' : '') + '" id="chk-' + ei + '"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>';
+      html += '<div class="ex-info"><div class="ex-name">' + ex.name + '</div><div class="ex-sets">' + ex.sets + ' подх. × ' + ex.reps + '</div></div>';
+      html += '<div class="ex-expand" id="arr-' + ei + '">›</div>';
+      html += '</div>';
+      html += '<div class="ex-detail" id="det-' + ei + '">';
+      html += '<div style="margin-bottom:8px;line-height:1.5">' + ex.tip + '</div>';
+      if (ex.sets > 1) {
+        html += '<div class="sets-tracker">';
+        for (let s = 0; s < ex.sets; s++) {
+          html += '<button class="set-btn' + (ds.sets[ei][s] ? ' done' : '') + '" onclick="toggleSet(' + ei + ',' + s + ')">' + (s + 1) + '</button>';
+        }
+        html += '</div>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    const allCompleted = day.exercises.every((_, ei) => ds.sets[ei] && ds.sets[ei].every(Boolean));
+    if (ds.completed) {
+      html += '<button class="complete-btn done-state" onclick="undoComplete()">✓ Тренировка выполнена — отменить</button>';
+    } else if (allCompleted) {
+      html += '<button class="complete-btn ready" onclick="completeDay()">Отметить тренировку выполненной</button>';
+    } else {
+      html += '<button class="complete-btn not-ready">Выполни все упражнения</button>';
+    }
+  } else {
+    html += '<div class="rest-day"><div class="rest-icon">🛋️</div><div class="rest-title">' + day.restText + '</div><div class="rest-sub">' + day.restSub + '</div></div>';
+  }
+
+  main.innerHTML = html;
+}
+
+function countSets(ds, day) {
+  let c = 0;
+  day.exercises.forEach((_, ei) => { if (ds.sets[ei]) c += ds.sets[ei].filter(Boolean).length; });
+  return c;
+}
+
+function toggleEx(ei) {
+  const det = document.getElementById('det-' + ei);
+  const arr = document.getElementById('arr-' + ei);
+  const open = det.classList.contains('open');
+  document.querySelectorAll('.ex-detail').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.ex-expand').forEach(a => a.classList.remove('open'));
+  if (!open) { det.classList.add('open'); arr.classList.add('open'); }
+}
+
+function toggleSet(ei, si) {
+  const key = getDayKey(weekStart, currentDayIdx);
+  const day = DAYS[currentDayIdx];
+  state[key].sets[ei][si] = !state[key].sets[ei][si];
+  if (day.exercises[ei].sets === 1) {
+    state[key].sets[ei][0] = !state[key].sets[ei][0];
+  }
+  saveState();
+  renderWorkout();
+  renderNav();
+  const det = document.getElementById('det-' + ei);
+  if (det) det.classList.add('open');
+  const arr = document.getElementById('arr-' + ei);
+  if (arr) arr.classList.add('open');
+}
+
+function completeDay() {
+  const key = getDayKey(weekStart, currentDayIdx);
+  state[key].completed = true;
+  const day = DAYS[currentDayIdx];
+  const today = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  history.unshift({ date: today, day: day.name, type: day.type });
+  if (history.length > 30) history.pop();
+  saveState();
+  renderWorkout();
+  renderNav();
+}
+
+function undoComplete() {
+  const key = getDayKey(weekStart, currentDayIdx);
+  state[key].completed = false;
+  history = history.filter((_, i) => i !== 0);
+  saveState();
+  renderWorkout();
+  renderNav();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'progress') renderProgress();
+}
+
+function renderProgress() {
+  const todayIdx = getTodayIdx();
+  let totalDone = 0, weekDone = 0, streak = 0;
+  Object.values(state).forEach(d => { if (d.completed) totalDone++; });
+
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  DAYS.forEach((d, i) => {
+    const key = getDayKey(weekStart, i);
+    const done = state[key] && state[key].completed;
+    if (done) weekDone++;
+    const cell = document.createElement('div');
+    cell.className = 'week-cell' + (done ? ' completed' : (d.isRest ? ' rest-cell' : '')) + (i === todayIdx ? ' today' : '');
+    cell.innerHTML = '<span class="cell-day">' + d.short + '</span>' + (done ? '✓' : (d.isRest ? '—' : ''));
+    grid.appendChild(cell);
+  });
+
+  for (let i = todayIdx; i >= 0; i--) {
+    const key = getDayKey(weekStart, i);
+    if (DAYS[i].isRest || (state[key] && state[key].completed)) streak++;
+    else break;
+  }
+
+  document.getElementById('stat-total').textContent = totalDone;
+  document.getElementById('stat-streak').textContent = streak;
+  document.getElementById('stat-week').textContent = weekDone + '/5';
+
+  const hist = document.getElementById('history-list');
+  if (history.length === 0) {
+    hist.innerHTML = '<div style="font-size:13px;color:var(--hint);padding:12px 0">Выполненные тренировки появятся здесь</div>';
+  } else {
+    hist.innerHTML = history.map(h => '<div class="history-item"><div><div class="hist-name">' + h.day + '</div><div class="hist-date">' + h.date + ' · ' + h.type + '</div></div><div class="hist-badge">✓</div></div>').join('');
+  }
+}
+
+getCurrentWeekNum();
+renderNav();
+renderWorkout();
+</script>
+</body>
+</html>
