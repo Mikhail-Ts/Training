@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Мои приложения</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg: #f7f7f5; --card: #fff; --text: #1a1a1a; --muted: #6b6b6b; --green: #1D9E75; --green-bg: #E1F5EE; --green-text: #085041; --border: rgba(0,0,0,0.1); }
+@media (prefers-color-scheme: dark) { :root { --bg: #111110; --card: #1e1e1c; --text: #f0ede8; --muted: #a0a09a; --border: rgba(255,255,255,0.1); --green-bg: #085041; --green-text: #9FE1CB; } }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+.sub { font-size: 14px; color: var(--muted); margin-bottom: 32px; }
+.apps { display: flex; flex-direction: column; gap: 12px; }
+.app-link { display: flex; align-items: center; gap: 16px; background: var(--card); border: 0.5px solid var(--border); border-radius: 14px; padding: 16px 20px; text-decoration: none; color: var(--text); }
+.app-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
+.app-name { font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+.app-desc { font-size: 13px; color: var(--muted); }
+.tip { background: var(--green-bg); color: var(--green-text); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.6; margin-top: 24px; }
+.tip strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Мои приложения</h1>
+<div class="sub">Открывай в Safari и добавляй на экран домой</div>
+<div class="apps">
+  <a class="app-link" href="workout_tracker.html">
+    <div class="app-icon" style="background:#E1F5EE">💪</div>
+    <div><div class="app-name">Тренировки</div><div class="app-desc">План на 8 недель, отметка подходов, прогресс</div></div>
+  </a>
+  <a class="app-link" href="meal_plan.html">
+    <div class="app-icon" style="background:#FAEEDA">🥗</div>
+    <div><div class="app-name">План питания</div><div class="app-desc">Меню на 7 дней, 3 приёма, без каш</div></div>
+  </a>
+  <a class="app-link" href="notes.html">
+    <div class="app-icon" style="background:#E6F1FB">📝</div>
+    <div><div class="app-name">Заметки</div><div class="app-desc">Заметки по категориям с поиском</div></div>
+  </a>
+</div>
+<div class="tip"><strong>Как добавить на экран домой:</strong> открой нужное приложение в Safari → нажми кнопку «Поделиться» → «На экран "Домой"» → готово!</div>
+</body>
+</html>
